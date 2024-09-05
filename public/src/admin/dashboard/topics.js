@@ -14,19 +14,38 @@ define('admin/dashboard/topics', ['admin/modules/dashboard-line-graph', 'hooks']
 
 	ACP.updateTable = () => {
 		if (window.fetch) {
-			fetch(`${config.relative_path}/api${ajaxify.data.url}${window.location.search}`, { credentials: 'include' }).then((response) => {
-				if (response.ok) {
-					response.json().then(function (payload) {
-						app.parseAndTranslate(ajaxify.data.template.name, 'topics', payload, function (html) {
-							const tbodyEl = document.querySelector('.topics-list tbody');
-							tbodyEl.innerHTML = '';
-							tbodyEl.append(...html.map((idx, el) => el));
-						});
-					});
-				}
-			});
+			const url = `${config.relative_path}/api${ajaxify.data.url}${window.location.search}`;
+			fetch(url, { credentials: 'include' })
+				.then(handleFetchResponse)
+				.catch(handleFetchError);
 		}
 	};
+
+	function handleFetchResponse(response) {
+		if (response.ok) {
+			response.json()
+				.then(handleJsonPayload)
+				.catch(handleJsonError);
+		}
+	}
+
+	function handleJsonPayload(payload) {
+		app.parseAndTranslate(ajaxify.data.template.name, 'topics', payload, updateTableContent);
+	}
+
+	function updateTableContent(html) {
+		const tbodyEl = document.querySelector('.topics-list tbody');
+		tbodyEl.innerHTML = '';
+		tbodyEl.append(...html.map((idx, el) => el));
+	}
+
+	function handleFetchError(error) {
+		console.error('Fetch error:', error);
+	}
+
+	function handleJsonError(error) {
+		console.error('JSON parsing error:', error);
+	}
 
 	return ACP;
 });
